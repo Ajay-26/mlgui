@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "mlgui"
+version = "0.1.0"
+description = ""
+authors = ["Ajay-26 <aj.sailopal@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.12"
+nicegui = "^1.2.6"
+numpy = "^1.23.4"
+tensorflow = "^2.12.0"
+pandas = "^2.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
