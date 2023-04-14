@@ -26,9 +26,16 @@ class DataSetHandle:
         df = pd.read_csv(csvstring)
         self.df = df
         ui.notify(f"Columns are: {self.df.columns}")
+        
+    def get_columns(self):
+        return list(self.df.columns)
             
     def choose_column(self, colname):
+        print(self.df.columns)
         y = self.df[colname]
-        x = self.df.drop(colname)
+        x = self.df.drop(colname,axis=1)
         self.y = np.array(y)
         self.x = np.array(x)
+    
+    def get_data(self):
+        return self.x,self.y

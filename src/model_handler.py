@@ -17,6 +17,7 @@ class ModelHandle:
     """
     def __init__(self):
         self.layer_list = []
+        self.layer_metadata = []
         self.lr = 1e-3
         self.optimizer = tf.keras.optimizers.Adam(1e-3)
         self.loss_fn = None
@@ -24,14 +25,46 @@ class ModelHandle:
         self.x_test = None
         self.y_train = None
         self.y_test = None
+        self.training_loss_png_path = "training_loss.png"
+        self.training_acc_png_path = "training_loss.png"
+        self.layer_options = ["Dense","Activation"]
+        self.optimizer_options = ["adam"]
+        self.loss_fn_options = ["bce","bce_logits"]
+        
+    def show_model_graphic(self):
+        edge_str = ""
+        num_layers = len(self.layer_metadata)
+        for idx,layer_metadata in enumerate(self.layer_metadata):
+            if idx < num_layers - 1:
+                edge_str = edge_str + layer_metadata[idx] + "-->" + layer_metadata[idx+1] + "\n"
+        mermaid_str = f'''
+        graph LR;
+            {edge_str}
+        '''
+        print(mermaid_str)
+        ui.mermaid(mermaid_str)
         
     def add_layer(self,layer_type : str, layer_param):
+        print(layer_type, layer_param)
+        if not (layer_type in self.layer_options):
+            ui.notify("This layer isn't available")
+            return
         if layer_type == "dense":
+            if not layer_type.isnumeric():
+                ui.notify("Wrong layer and parameter combination")
+                return
             #Dense layer, param would be the size of the output
             self.layer_list.append(layers.Dense(layer_param))
+            self.layer_metadata.append(f"Dense({layer_param})")
         elif layer_type == "activation":
             #Activation layer, param would be type of activation
+            if not layer_param.isalpha():
+                ui.notify("Wrong layer and parameter combination")
+                return
             self.layer_list.append(layers.activation(layer_param))
+            self.layer_metadata.append(f"Activation({layer_param})")
+        self.show_model_graphic()
+        print("Perhaps displayed model graphic ?")
     
     def set_lr(self,lr: float):
         self.lr = lr
@@ -59,7 +92,7 @@ class ModelHandle:
         plt.ylim([0, max(plt.ylim())])
         plt.xlabel('Epoch')
         plt.ylabel('Loss [CrossEntropy]')
-        plt.savefig("training_losses.png")
+        plt.savefig(self.training_loss_png_path)
         plt.clf()
 
         plt.subplot(1,2,2)
@@ -68,14 +101,28 @@ class ModelHandle:
         plt.ylim([0, 100])
         plt.xlabel('Epoch')
         plt.ylabel('Accuracy [%]')
-        plt.savefig("training_accuracy.png")
-        plt.clf()
-
-        #Files can be deleted at this point because they are saved in mlflow
-        os.remove("training_losses.png")
-        os.remove("training_accuracy.png")    
+        plt.savefig(self.training_acc_png_path)
+        plt.clf()  
             
-    def train_model(self):
+    def train_model(self, loss_fn_input: str, lr_input: str, optimizer_input: str):
+        print(loss_fn_input, lr_input, optimizer_input)
+        if len(self.layer_list) <= 0:
+            ui.notify("You haven't added any layers, please add layers")
+        try:
+            if not (loss_fn_input in self.loss_fn_options):
+                ui.notify("This loss function is not available")
+            if not lr_input.isnumeric():
+                ui.notify("Invalid format for learning rate input")
+            if not (optimizer_input in self.optimizer_options):
+                ui.notify("This optimizer is not available")
+        except Exception as e:
+            ui.notify("Please enter in all the fields")
+        try:        
+            self.set_loss_fn(loss_fn_input)
+            self.set_optimizer(optimizer_input)
+            self.set_lr(lr_input)
+        except Exception as e:
+            ui.notify(f"Exception occured while setting model parameters: {e}")
         self.ml_model = keras.models.Sequential(self.layer_list)
         ui.markdown(self.ml_model.summary())
         self.ml_model.compile(
@@ -83,6 +130,7 @@ class ModelHandle:
             loss=self.loss_fn,
             metrics=['accuracy']) 
         self.history = self.ml_model.fit(self.x_train,self.y_train, validation_split=0.2,epochs=50,batch_size=32)
+
         
     def display_results(self):
         ui.markdown(self.history)
