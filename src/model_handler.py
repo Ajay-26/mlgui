@@ -30,39 +30,46 @@ class ModelHandle:
         self.layer_options = ["Dense","Activation"]
         self.optimizer_options = ["adam"]
         self.loss_fn_options = ["bce","bce_logits"]
+        self.model_graphic = None
         
     def show_model_graphic(self):
+        alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         edge_str = ""
+        print(self.layer_metadata)
         num_layers = len(self.layer_metadata)
-        for idx,layer_metadata in enumerate(self.layer_metadata):
-            if idx < num_layers - 1:
-                edge_str = edge_str + layer_metadata[idx] + "-->" + layer_metadata[idx+1] + "\n"
+        for i in range(num_layers):
+            if i < num_layers - 1:
+                j = i+1
+                edge_str = edge_str + f"{alphabet[i]}[{self.layer_metadata[i]}] -->  {alphabet[j]}[{self.layer_metadata[j]}];\n"
         mermaid_str = f'''
-        graph LR;
+        flowchart LR;
             {edge_str}
         '''
         print(mermaid_str)
-        ui.mermaid(mermaid_str)
-        
+        if self.model_graphic is None:
+            self.model_graphic = ui.mermaid(mermaid_str)
+        else:
+            self.model_graphic.delete()
+            self.model_graphic = ui.mermaid(mermaid_str)    
     def add_layer(self,layer_type : str, layer_param):
         print(layer_type, layer_param)
         if not (layer_type in self.layer_options):
             ui.notify("This layer isn't available")
             return
-        if layer_type == "dense":
-            if not layer_type.isnumeric():
+        if layer_type == "Dense":
+            if not layer_param.isnumeric():
                 ui.notify("Wrong layer and parameter combination")
                 return
             #Dense layer, param would be the size of the output
             self.layer_list.append(layers.Dense(layer_param))
-            self.layer_metadata.append(f"Dense({layer_param})")
-        elif layer_type == "activation":
+            self.layer_metadata.append(f"Dense-{layer_param}")
+        elif layer_type == "Activation":
             #Activation layer, param would be type of activation
             if not layer_param.isalpha():
                 ui.notify("Wrong layer and parameter combination")
                 return
-            self.layer_list.append(layers.activation(layer_param))
-            self.layer_metadata.append(f"Activation({layer_param})")
+            self.layer_list.append(layers.Activation(layer_param))
+            self.layer_metadata.append(f"Activation-{layer_param}")
         self.show_model_graphic()
         print("Perhaps displayed model graphic ?")
     
@@ -81,6 +88,7 @@ class ModelHandle:
             
     def set_data(self, x,y):
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(x,y,test_size=0.2)
+        self.input_shape = self.x_train.shape[1:]
     
     def plot_training_outputs(self,history):
         metrics = history.history
@@ -111,7 +119,7 @@ class ModelHandle:
         try:
             if not (loss_fn_input in self.loss_fn_options):
                 ui.notify("This loss function is not available")
-            if not lr_input.isnumeric():
+            if not lr_input.replace(".","").isnumeric():
                 ui.notify("Invalid format for learning rate input")
             if not (optimizer_input in self.optimizer_options):
                 ui.notify("This optimizer is not available")
@@ -120,16 +128,19 @@ class ModelHandle:
         try:        
             self.set_loss_fn(loss_fn_input)
             self.set_optimizer(optimizer_input)
-            self.set_lr(lr_input)
+            self.set_lr(float(lr_input))
         except Exception as e:
             ui.notify(f"Exception occured while setting model parameters: {e}")
         self.ml_model = keras.models.Sequential(self.layer_list)
+        self.ml_model.build(self.input_shape)
         ui.markdown(self.ml_model.summary())
         self.ml_model.compile(
             optimizer=self.optimizer,
             loss=self.loss_fn,
             metrics=['accuracy']) 
+
         self.history = self.ml_model.fit(self.x_train,self.y_train, validation_split=0.2,epochs=50,batch_size=32)
+        
 
         
     def display_results(self):

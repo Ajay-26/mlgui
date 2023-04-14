@@ -35,4 +35,4 @@ class PageManager:
         lr_input = ui.input("Enter learning rate")
         loss_fn_input = ui.select(self.model_handler.loss_fn_options)
         optimizer_input = ui.select(self.model_handler.optimizer_options)
-        ui.button("Create Model", on_click=lambda e: self.model_handler.train_model(lr_input.value, loss_fn_input.value, optimizer_input.value))
+        ui.button("Create Model", on_click=lambda e: self.model_handler.train_model(loss_fn_input.value,lr_input.value, optimizer_input.value))
