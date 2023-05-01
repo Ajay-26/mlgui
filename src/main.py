@@ -23,7 +23,6 @@ def dataset_page():
 def model_page():
     ui.markdown("Model page - under construction")
     page_manager.display_model_ui()
-    pass
 
 global page_manager
 

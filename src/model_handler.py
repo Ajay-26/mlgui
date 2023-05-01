@@ -131,9 +131,11 @@ class ModelHandle:
             self.set_lr(float(lr_input))
         except Exception as e:
             ui.notify(f"Exception occured while setting model parameters: {e}")
-        self.ml_model = keras.models.Sequential(self.layer_list)
+        self.ml_model = keras.models.Sequential([layers.Input(self.input_shape)] + self.layer_list)
         self.ml_model.build(self.input_shape)
-        ui.markdown(self.ml_model.summary())
+        stringlist = []
+        self.ml_model.summary(print_fn=lambda x: stringlist.append(x))
+        ui.markdown(stringlist)
         self.ml_model.compile(
             optimizer=self.optimizer,
             loss=self.loss_fn,
