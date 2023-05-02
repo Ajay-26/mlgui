@@ -135,20 +135,21 @@ class ModelHandle:
         self.ml_model.build(self.input_shape)
         stringlist = []
         self.ml_model.summary(print_fn=lambda x: stringlist.append(x))
-        ui.markdown(stringlist)
+        ui.markdown(''.join(stringlist))
+        print(stringlist)
         self.ml_model.compile(
             optimizer=self.optimizer,
             loss=self.loss_fn,
             metrics=['accuracy']) 
 
         self.history = self.ml_model.fit(self.x_train,self.y_train, validation_split=0.2,epochs=50,batch_size=32)
-        
-
+        self.display_results()
         
     def display_results(self):
-        ui.markdown(self.history)
-        self.ml_model.evaluate(self.x_test,self.y_test)
         self.plot_training_outputs(self.history)
-        ui.image("training_loss.png")
-        ui.image("training_accuracy.png")
+        ui.html(f"<img src=\'{self.training_loss_png_path}\' width=\'500\' height=\'600\'>")
+        ui.html(f"<img src=\'{self.training_acc_png_path}\' width=\'500\' height=\'600\'>")
         
+    def display_test_results(self):
+        self.ml_model.evaluate(self.x_test,self.y_test)
+        print("Evaluated model")
