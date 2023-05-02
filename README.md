@@ -3,6 +3,7 @@ A nice GUI for Machine Learning
 This repo aims to provide people with a GUI to be able to perform machine learning/data analysis by writing little to no code at all.
 
 To run this code, clone the repo and run the following:
+
 cd mlgui 
 
 pip install poetry
